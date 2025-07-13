@@ -36,8 +36,12 @@ export default function HomePage() {
 
       const data = await response.json();
       setIdeas(data.ideas);
-    } catch (e: any) {
-      setError(`An error occurred: ${e.message}`);
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        setError(`An error occurred: ${e.message}`);
+      } else {
+        setError("An unknown error occurred.");
+      }
       console.error(e);
     } finally {
       setLoading(false);
@@ -83,21 +87,21 @@ export default function HomePage() {
               </h2>
               <ReactMarkdown
                 components={{
-                  ol: ({ node, ...props }) => (
+                  ol: ({ ...props }) => (
                     <ol className="list-none space-y-5" {...props} />
                   ),
-                  li: ({ node, ...props }) => (
+                  li: ({ ...props }) => (
                     <li className="flex items-start gap-4 p-4 bg-slate-50 border border-slate-200 rounded-lg shadow-sm">
                       <div className="flex-1">{props.children}</div>
                     </li>
                   ),
-                  strong: ({ node, ...props }) => (
+                  strong: ({ ...props }) => (
                     <strong
                       className="text-lg font-semibold text-gray-900 block mb-1"
                       {...props}
                     />
                   ),
-                  p: ({ node, ...props }) => (
+                  p: ({ ...props }) => (
                     <p className="text-gray-700 leading-relaxed" {...props} />
                   ),
                 }}
