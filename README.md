@@ -70,12 +70,3 @@ npm run dev
 ```
 
 Open your browser and navigate to [http://localhost:3000](http://localhost:3000) to see the application in action.
-
-## Deployment
-
-The easiest way to deploy this application is using **Vercel**, the platform built by the creators of Next.js.
-
-1.  Push your code to a GitHub repository.
-2.  Import the repository into Vercel.
-3.  Add your `GOOGLE_API_KEY` as an environment variable in the Vercel project settings.
-4.  Vercel will automatically build and deploy your application.
