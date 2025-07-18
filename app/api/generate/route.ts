@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 // This function will handle any POST requests that are sent to /api/generate
 export async function POST(request: Request) {
   const { topic } = await request.json();
+  
   if (!topic) {
     return NextResponse.json(
       { error: "Topic is required." },
@@ -11,41 +12,101 @@ export async function POST(request: Request) {
     );
   }
 
+  // Validate topic length
+  if (topic.length > 200) {
+    return NextResponse.json(
+      { error: "Topic is too long. Please keep it under 200 characters." },
+      { status: 400 }
+    );
+  }
+
   try {
-    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const prompt = `
-      You are an expert brainstorming assistant. Your goal is to generate creative and actionable ideas.
-      Generate 5 unique ideas for the following topic: "${topic}"
-      Format your response as a numbered list. For each idea, provide a one-sentence description.
-      Example:
-      Input : genai project ideas
-      Output : 
-      1. Idea Name 1\n
-      Idea point 1\n
-      Idea point 2\n\n
-      2. Idea Name 2\n
-      Idea point 1\n
-      Idea point 2\n
-      [Example End]
-      As per above example give responce in points, not the whole paragraph
-      This is the sample response
-      '''
-      "1. **\"The Accidental Expert\"**: \n Interviews individuals who unexpectedly became highly skilled in a niche area, exploring their unconventional paths to mastery and offering relatable lessons on skill development.\n\n\n2. **\"Future Forward Folklore\"**:  \nReimagines classic folklore and mythology within futuristic settings, blending storytelling with speculative fiction and societal commentary.\n\n\n3. **\"The Sensory Symphony\"**: \nA fully immersive soundscape podcast using binaural audio and ambient sounds to create unique auditory experiences themed around different emotions, locations, or historical events.\n\n\n4. **\"Deconstructing Decades\"**:  \nEach episode analyzes a specific decade through the lens of popular culture, examining its trends, social anxieties, and enduring impact on the present.\n\n\n5. **\"The Curiosity Cabinet\"**: \nA podcast dedicated to exploring bizarre, unexplained phenomena and historical oddities, blending investigative journalism with storytelling and expert analysis.\n"
-      '''
-      Give response in the markdown file
-    `;
+    // Check if API key exists
+    if (!process.env.GOOGLE_API_KEY) {
+      console.error("Google API key is not configured");
+      return NextResponse.json(
+        { error: "Service configuration error." },
+        { status: 500 }
+      );
+    }
+
+    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash",
+      generationConfig: {
+        temperature: 0.8,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 2048,
+      },
+    });
+
+    const prompt = `You are a creative brainstorming assistant specializing in generating innovative, actionable ideas. Your task is to provide exactly 5 unique, well-structured ideas for the given topic.
+
+TOPIC: "${topic}"
+
+FORMATTING REQUIREMENTS:
+- Use numbered list format (1., 2., 3., etc.)
+- Each idea must have a bold title followed by bullet points
+- Provide 2-3 bullet points per idea explaining key aspects
+- Use markdown formatting
+- Keep each bullet point concise (1-2 sentences)
+- Make ideas diverse and creative
+
+EXAMPLE FORMAT:
+1. **Creative Title Here**
+   • Brief description of the main concept
+   • Key benefit or unique aspect
+   • Implementation consideration
+
+2. **Another Creative Title**
+   • Main concept explanation
+   • Why this idea stands out
+   • Practical application note
+
+GUIDELINES:
+- Ideas should be practical and actionable
+- Avoid generic or overly broad suggestions
+- Focus on innovation and creativity
+- Consider different perspectives and approaches
+- Make each idea distinct from the others
+
+Generate 5 creative ideas for: "${topic}"`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    const ideas = response.text();
+    
+    // Check if response is blocked or empty
+    if (!response || !response.text()) {
+      console.error("Empty or blocked response from Gemini API");
+      return NextResponse.json(
+        { error: "Unable to generate ideas for this topic. Please try a different topic." },
+        { status: 422 }
+      );
+    }
 
-    return NextResponse.json({ ideas });
+    const ideas = response.text();
+    
+    // Basic validation of response format
+    if (ideas.length < 50) {
+      console.error("Response too short:", ideas);
+      return NextResponse.json(
+        { error: "Generated response was too short. Please try again." },
+        { status: 422 }
+      );
+    }
+
+    return NextResponse.json({ 
+      ideas: ideas.trim(),
+      timestamp: new Date().toISOString(),
+      topic: topic 
+    });
 
   } catch (error) {
     console.error("Error generating ideas:", error);
+
     return NextResponse.json(
-      { error: "Failed to generate ideas." },
+      { error: "Failed to generate ideas. Please try again." },
       { status: 500 }
     );
   }
