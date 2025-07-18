@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { Components } from "react-markdown";
 import { Globe, Github, Linkedin, Lightbulb, Sparkles, ArrowRight } from "lucide-react";
 
 export default function HomePage() {
@@ -10,7 +11,7 @@ export default function HomePage() {
   const [ideas, setIdeas] = useState<string>("");
   const [error, setError] = useState<string>("");
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement> | React.MouseEvent<HTMLButtonElement> | React.KeyboardEvent<HTMLInputElement>) => {
     event.preventDefault();
 
     setIdeas("");
@@ -89,7 +90,7 @@ export default function HomePage() {
                   className="w-full p-4 pr-12 text-gray-900 placeholder-gray-500 bg-white border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 focus:outline-none transition-all duration-200 text-sm sm:text-base"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && topic.trim()) {
-                      handleSubmit(e as any);
+                      handleSubmit(e);
                     }
                   }}
                 />
@@ -99,7 +100,7 @@ export default function HomePage() {
               </div>
               
               <button
-                onClick={(e) => topic.trim() && handleSubmit(e as any)}
+                onClick={(e) => topic.trim() && handleSubmit(e)}
                 disabled={loading || !topic.trim()}
                 className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center space-x-2"
               >
@@ -149,10 +150,10 @@ export default function HomePage() {
               <div className="prose prose-lg max-w-none">
                 <ReactMarkdown
                   components={{
-                    ol: ({ ...props }) => (
+                    ol: (props) => (
                       <ol className="list-none space-y-4 sm:space-y-6" {...props} />
                     ),
-                    li: ({ ...props }) => (
+                    li: (props) => (
                       <li className="group bg-gradient-to-r from-white to-gray-50 p-2 rounded-x">
                         <div className="flex items-start space-x-2">
                           <div className="flex-1 min-w-0 text-gray-800">
@@ -161,13 +162,13 @@ export default function HomePage() {
                         </div>
                       </li>
                     ),
-                    strong: ({ ...props }) => (
+                    strong: (props) => (
                       <strong className="text-lg sm:text-xl font-bold text-gray-900 block mb-2" {...props} />
                     ),
-                    p: ({ ...props }) => (
+                    p: (props) => (
                       <p className="text-gray-800 leading-relaxed text-sm sm:text-base" {...props} />
                     ),
-                  }}
+                  } as Components}
                 >
                   {ideas}
                 </ReactMarkdown>
